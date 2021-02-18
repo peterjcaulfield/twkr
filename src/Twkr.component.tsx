@@ -1,5 +1,6 @@
+import React, { useState, useEffect, useMemo } from "react";
 import { Schema, Settings } from "use-tweaks/dist/types";
-import React, { useState } from "react";
+import { useTweaks } from "use-tweaks";
 
 interface ControlType {
   name?: string;
@@ -10,7 +11,7 @@ interface ControlType {
 type Target = Record<string, string>;
 type ControlMap = Record<string, ControlType>;
 
-const tweakMap = new Set();
+const tweakMap = new Set<string>();
 
 interface ITwkrProps {
   target: Target;
@@ -31,6 +32,7 @@ const tweakable = (
 ) => new Proxy(t, getHandler(cb));
 
 const handler = (track: TweakTrack) => ({
+  // TODO add set?
   get(t: Target, prop: keyof Target) {
     track((curr) => {
       if (!curr.has(prop)) {
@@ -38,7 +40,6 @@ const handler = (track: TweakTrack) => ({
         curr.add(prop);
         return update;
       } else {
-        // bail out of the update
         return curr;
       }
     });
@@ -46,13 +47,41 @@ const handler = (track: TweakTrack) => ({
   },
 });
 
+const getUseTweakConfigFromProps = (
+  t: Target,
+  c: ControlMap,
+  tweaked: Set<keyof Target>
+) => {
+  const tweakConfig = {};
+  // TODO: construct the config
+  return tweakConfig;
+};
+
 export const Twkr: React.FC<ITwkrProps> = ({
   target,
   controlMap,
   children,
 }) => {
-  const [tweaked, setTweaked] = useState(tweakMap);
-  const [tweakTracked] = useState(() => tweakable(target, handler, setTweaked));
+  const [tweaked, setTweaked] = useState<Set<string>>(tweakMap);
+
+  const [tweakTracked, setTweakTracked] = useState(() =>
+    tweakable(target, handler, setTweaked)
+  );
+
+  const tweakConfig = useMemo(
+    () => getUseTweakConfigFromProps(target, controlMap, tweaked),
+    [tweaked]
+  );
+
+  const tweakControlled = useTweaks("test", tweakConfig);
+
+  useEffect(() => {
+    // TODO: ensure updates are proxied as expected when retrieved
+    const update = { ...target, ...tweakControlled };
+    // @ts-ignore
+    // TODO: fix type here as it needs to be Record<keyof Target, string>
+    setTweakTracked(update);
+  }, [tweakControlled]);
 
   return children(tweakTracked);
 };
