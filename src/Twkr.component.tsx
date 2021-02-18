@@ -10,7 +10,7 @@ interface ControlType {
 type Target = Record<string, string>;
 type ControlMap = Record<string, ControlType>;
 
-const tweakMap = new Map();
+const tweakMap = new Set();
 
 interface ITwkrProps {
   target: Target;
@@ -22,14 +22,23 @@ interface IInterceptor {
   get: (t: Target, prop: string) => string;
 }
 
-const tweakable = (t: Target, handler: IInterceptor) => new Proxy(t, handler);
+type TweakTrack = React.Dispatch<React.SetStateAction<Set<string>>>;
 
-const tweakHandler = {
+const tweakable = (
+  t: Target,
+  getHandler: (u: TweakTrack) => IInterceptor,
+  cb: TweakTrack
+) => new Proxy(t, getHandler(cb));
+
+const handler = (track: TweakTrack) => ({
   get(t: Target, prop: keyof Target) {
-    console.log(`${t[prop]}`);
+    track((curr) => {
+      curr.add(prop);
+      return curr;
+    });
     return Reflect.get(t, prop);
   },
-};
+});
 
 export const Twkr: React.FC<ITwkrProps> = ({
   target,
@@ -37,7 +46,7 @@ export const Twkr: React.FC<ITwkrProps> = ({
   children,
 }) => {
   const [tweaked, setTweaked] = useState(tweakMap);
-  const [tweakTracked] = useState(() => tweakable(target, tweakHandler));
+  const [tweakTracked] = useState(() => tweakable(target, handler, setTweaked));
 
   return children(tweakTracked);
 };
