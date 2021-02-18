@@ -38,6 +38,7 @@ const handler = (track: TweakTrack) => ({
         curr.add(prop);
         return update;
       } else {
+        // bail out of the update
         return curr;
       }
     });
