@@ -33,8 +33,13 @@ const tweakable = (
 const handler = (track: TweakTrack) => ({
   get(t: Target, prop: keyof Target) {
     track((curr) => {
-      curr.add(prop);
-      return curr;
+      if (!curr.has(prop)) {
+        const update = new Set(curr);
+        curr.add(prop);
+        return update;
+      } else {
+        return curr;
+      }
     });
     return Reflect.get(t, prop);
   },
