@@ -1,0 +1,30 @@
+{
+  "name": "twkr",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/peterjcaulfield/twkr.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/peterjcaulfield/twkr/issues"
+  },
+  "homepage": "https://github.com/peterjcaulfield/twkr#readme",
+  "devDependencies": {
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
+    "styled-components": "^5.2.1"
+  },
+  "dependencies": {
+    "@types/react": "^17.0.2",
+    "tweakpane": "^1.5.9",
+    "use-tweaks": "^0.3.1"
+  }
+}
