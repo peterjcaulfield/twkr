@@ -61,14 +61,7 @@ export const Twkr: React.FC<ITwkrProps> = ({
     tweakable(target, handler, setTweaked)
   );
 
-  useEffect(() => {
-    console.log("tweak tracked changed");
-  }, [tweakTracked]);
-
-  console.log("tweaked is", tweaked);
-
   const tweakConfig = useMemo(() => {
-    console.log("generating tweak config");
     return getUseTweakConfigFromProps(tweaked, controlMap);
   }, [tweaked]);
 
@@ -77,7 +70,6 @@ export const Twkr: React.FC<ITwkrProps> = ({
 
   useEffect(() => {
     const update = { ...target, ...tweakControlled };
-    console.log("setting tweak tracked");
     // @ts-ignore
     // TODO: fix type here as it needs to be Record<keyof Target, string>
     setTweakTracked(update);
