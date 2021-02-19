@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "noImplicitAny": true,
+    "allowSyntheticDefaultImports": true,
+    "allowJs": true,
+    "module": "esnext",
+    "target": "es2017",
+    "jsx": "react",
+    "baseUrl": "src"
+  }
+}

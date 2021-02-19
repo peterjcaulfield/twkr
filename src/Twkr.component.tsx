@@ -2,20 +2,14 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Schema, Settings } from "use-tweaks/dist/types";
 import { useTweaks } from "use-tweaks";
 
-interface ControlType {
-  name?: string;
-  controlType: Schema;
-  settings: Settings;
-}
-
 type Target = Record<string, string>;
-type ControlMap = Record<string, ControlType>;
+type ControlMap<T> = Record<keyof T, Settings>;
 
 const tweakMap = new Set<string>();
 
 interface ITwkrProps {
   target: Target;
-  controlMap: ControlMap;
+  controlMap: ControlMap<Target>;
   children: (t: Target) => React.ReactElement;
 }
 
@@ -31,29 +25,28 @@ const tweakable = (
   cb: TweakTrack
 ) => new Proxy(t, getHandler(cb));
 
+const usedTokens = new Set<keyof Target>();
 const handler = (track: TweakTrack) => ({
-  // TODO add set?
   get(t: Target, prop: keyof Target) {
-    track((curr) => {
-      if (!curr.has(prop)) {
-        const update = new Set(curr);
-        curr.add(prop);
-        return update;
-      } else {
-        return curr;
-      }
-    });
+    // react doesn't bail out of renders even if state doesn't change so
+    // we need to maintain a copy of the tracked keys to get calls to setState
+    // https://github.com/facebook/react/issues/14994
+    if (!usedTokens.has(prop)) {
+      usedTokens.add(prop);
+      track(new Set(usedTokens));
+    }
     return Reflect.get(t, prop);
   },
 });
 
 const getUseTweakConfigFromProps = (
-  t: Target,
-  c: ControlMap,
-  tweaked: Set<keyof Target>
-) => {
-  const tweakConfig = {};
-  // TODO: construct the config
+  tweaked: Set<keyof Target>,
+  c: ControlMap<Target>
+): ControlMap<Target> => {
+  const tweakConfig: Record<string, Settings> = {};
+  for (const entry of tweaked) {
+    tweakConfig[entry] = c[entry];
+  }
   return tweakConfig;
 };
 
@@ -68,16 +61,23 @@ export const Twkr: React.FC<ITwkrProps> = ({
     tweakable(target, handler, setTweaked)
   );
 
-  const tweakConfig = useMemo(
-    () => getUseTweakConfigFromProps(target, controlMap, tweaked),
-    [tweaked]
-  );
+  useEffect(() => {
+    console.log("tweak tracked changed");
+  }, [tweakTracked]);
 
+  console.log("tweaked is", tweaked);
+
+  const tweakConfig = useMemo(() => {
+    console.log("generating tweak config");
+    return getUseTweakConfigFromProps(tweaked, controlMap);
+  }, [tweaked]);
+
+  // confirm this returns same reference if tweakConfig doesnt change
   const tweakControlled = useTweaks("test", tweakConfig);
 
   useEffect(() => {
-    // TODO: ensure updates are proxied as expected when retrieved
     const update = { ...target, ...tweakControlled };
+    console.log("setting tweak tracked");
     // @ts-ignore
     // TODO: fix type here as it needs to be Record<keyof Target, string>
     setTweakTracked(update);
