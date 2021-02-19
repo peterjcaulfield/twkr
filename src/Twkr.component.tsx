@@ -29,7 +29,7 @@ const usedTokens = new Set<keyof Target>();
 const handler = (track: TweakTrack) => ({
   get(t: Target, prop: keyof Target) {
     // react doesn't bail out of renders even if state doesn't change so
-    // we need to maintain a copy of the tracked keys to get calls to setState
+    // we need to maintain a copy of the tracked keys to gate calls to setState
     // https://github.com/facebook/react/issues/14994
     if (!usedTokens.has(prop)) {
       usedTokens.add(prop);
