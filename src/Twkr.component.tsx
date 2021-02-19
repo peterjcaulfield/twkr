@@ -66,6 +66,7 @@ export const Twkr: React.FC<ITwkrProps> = ({
   }, [tweaked]);
 
   // confirm this returns same reference if tweakConfig doesnt change
+  // lest ye olde infinite loop occurs in the effect below
   const tweakControlled = useTweaks("test", tweakConfig);
 
   useEffect(() => {
