@@ -13,14 +13,28 @@ const tokens = {
   FOO: "BAR",
 };
 
-const controlMap = {
-  FOO: { value: "BAR" },
-};
-
 describe("Twkr test", () => {
   test("target is proxied", () => {
+    const controlMap = {
+      FOO: { value: "BAR" },
+    };
     render(
       <Twkr target={tokens} controlMap={controlMap}>
+        {(tokens) => <span>{tokens.FOO}</span>}
+      </Twkr>
+    );
+
+    expect(useTweaks).toHaveBeenLastCalledWith("test", {
+      FOO: { value: "BAR" },
+    });
+  });
+
+  test("target controls can be mapped via keyToControl", () => {
+    const keyToControl = (t: Record<string, string>, key: keyof typeof t) => ({
+      value: t[key],
+    });
+    render(
+      <Twkr target={tokens} keyToControl={keyToControl}>
         {(tokens) => <span>{tokens.FOO}</span>}
       </Twkr>
     );

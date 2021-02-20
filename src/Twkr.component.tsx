@@ -5,7 +5,7 @@ import { useTweaks } from "use-tweaks";
 type Target = Record<string, string>;
 type Control<T> = Record<keyof T, Settings>;
 type ControlMap<T> = Control<T>;
-type KeyToControl = (key: keyof Target) => Control<Target>;
+type KeyToControl = (target: Target, key: keyof Target) => Settings;
 
 const tweakMap = new Set<string>();
 
@@ -44,14 +44,15 @@ const handler = (track: TweakTrack) => ({
 
 const getUseTweakConfigFromProps = (
   tweaked: Set<keyof Target>,
+  t: Target,
   c: ControlMap<Target>,
   f: KeyToControl
 ): ControlMap<Target> => {
   const tweakConfig: Record<string, Settings> = {};
   for (const entry of tweaked) {
     let controlForKey;
-    if (!c[entry]) {
-      controlForKey = f ? f(entry) : undefined;
+    if (!c || !c[entry]) {
+      controlForKey = f ? f(t, entry) : undefined;
     } else {
       controlForKey = c[entry];
     }
@@ -73,12 +74,19 @@ export const Twkr: React.FC<ITwkrProps> = ({
   );
 
   const tweakConfig = useMemo(() => {
-    return getUseTweakConfigFromProps(tweaked, controlMap, keyToControl);
+    return getUseTweakConfigFromProps(
+      tweaked,
+      target,
+      controlMap,
+      keyToControl
+    );
   }, [tweaked]);
 
   // confirm this returns same reference if tweakConfig doesnt change
   // lest ye olde infinite loop occurs in the effect below
   // TODO: handle hardcoded name param (not sure how dynamic we need it tbh)
+  // TODO: ensure when key is added to tweakConfig existing tweakConfig
+  // values aren't clobbered by the original target value
   const tweakControlled = useTweaks("test", tweakConfig);
 
   useEffect(() => {
