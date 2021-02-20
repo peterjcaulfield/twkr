@@ -3,13 +3,16 @@ import { Schema, Settings } from "use-tweaks/dist/types";
 import { useTweaks } from "use-tweaks";
 
 type Target = Record<string, string>;
-type ControlMap<T> = Record<keyof T, Settings>;
+type Control<T> = Record<keyof T, Settings>;
+type ControlMap<T> = Control<T>;
+type KeyToControl = (key: keyof Target) => Control<Target>;
 
 const tweakMap = new Set<string>();
 
 interface ITwkrProps {
   target: Target;
-  controlMap: ControlMap<Target>;
+  controlMap?: ControlMap<Target>;
+  keyToControl?: KeyToControl;
   children: (t: Target) => React.ReactElement;
 }
 
@@ -41,11 +44,16 @@ const handler = (track: TweakTrack) => ({
 
 const getUseTweakConfigFromProps = (
   tweaked: Set<keyof Target>,
-  c: ControlMap<Target>
+  c: ControlMap<Target>,
+  f: KeyToControl
 ): ControlMap<Target> => {
   const tweakConfig: Record<string, Settings> = {};
   for (const entry of tweaked) {
-    tweakConfig[entry] = c[entry];
+    let controlForKey;
+    if (!c[entry]) {
+      controlForKey = f ? f(entry) : undefined;
+    }
+    tweakConfig[entry] = controlForKey;
   }
   return tweakConfig;
 };
@@ -53,6 +61,7 @@ const getUseTweakConfigFromProps = (
 export const Twkr: React.FC<ITwkrProps> = ({
   target,
   controlMap,
+  keyToControl,
   children,
 }) => {
   const [tweaked, setTweaked] = useState<Set<string>>(tweakMap);
@@ -62,7 +71,7 @@ export const Twkr: React.FC<ITwkrProps> = ({
   );
 
   const tweakConfig = useMemo(() => {
-    return getUseTweakConfigFromProps(tweaked, controlMap);
+    return getUseTweakConfigFromProps(tweaked, controlMap, keyToControl);
   }, [tweaked]);
 
   // confirm this returns same reference if tweakConfig doesnt change
