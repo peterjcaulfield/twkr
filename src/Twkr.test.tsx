@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React from "react";
 import { Twkr } from "./";
-import { render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
+import { useTweaks } from "use-tweaks";
 
 // return same reference
 const tweaksReturn = { FOO: "BAR" };
 jest.mock("use-tweaks", () => ({
-  useTweaks: () => tweaksReturn,
+  useTweaks: jest.fn(() => tweaksReturn),
 }));
 
 const tokens = {
@@ -20,12 +21,12 @@ describe("Twkr test", () => {
   test("target is proxied", () => {
     render(
       <Twkr target={tokens} controlMap={controlMap}>
-        {(tokens) => {
-          return <span>{tokens.FOO}</span>;
-        }}
+        {(tokens) => <span>{tokens.FOO}</span>}
       </Twkr>
     );
 
-    screen.debug();
+    expect(useTweaks).toHaveBeenLastCalledWith("test", {
+      FOO: { value: "BAR" },
+    });
   });
 });

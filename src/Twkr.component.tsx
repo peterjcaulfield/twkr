@@ -52,6 +52,8 @@ const getUseTweakConfigFromProps = (
     let controlForKey;
     if (!c[entry]) {
       controlForKey = f ? f(entry) : undefined;
+    } else {
+      controlForKey = c[entry];
     }
     tweakConfig[entry] = controlForKey;
   }
