@@ -78,6 +78,7 @@ export const Twkr: React.FC<ITwkrProps> = ({
 
   // confirm this returns same reference if tweakConfig doesnt change
   // lest ye olde infinite loop occurs in the effect below
+  // TODO: handle hardcoded name param (not sure how dynamic we need it tbh)
   const tweakControlled = useTweaks("test", tweakConfig);
 
   useEffect(() => {
