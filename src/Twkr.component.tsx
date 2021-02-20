@@ -1,13 +1,11 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Schema, Settings } from "use-tweaks/dist/types";
-import { useTweaks } from "use-tweaks";
+import React, { useState, useEffect } from "react";
+import { useControls } from "leva";
+import { Schema } from "leva/dist/declarations/src/types";
 
-type Target = Record<string, string>;
-type Control<T> = Record<keyof T, Settings>;
+type Target = Record<string, string | number>;
+type Control<T> = Record<keyof T, Schema>;
 type ControlMap<T> = Control<T>;
-type KeyToControl = (target: Target, key: keyof Target) => Settings;
-
-const tweakMap = new Set<string>();
+type KeyToControl = (target: Target, key: keyof Target) => Schema;
 
 interface ITwkrProps {
   target: Target;
@@ -34,7 +32,8 @@ const handler = (track: TweakTrack) => ({
     // react doesn't bail out of renders even if state doesn't change so
     // we need to maintain a copy of the tracked keys to gate calls to setState
     // https://github.com/facebook/react/issues/14994
-    if (!usedTokens.has(prop)) {
+    // TODO: has own property check via Reflect somehow
+    if (!usedTokens.has(prop) && prop !== "toJSON") {
       usedTokens.add(prop);
       track(new Set(usedTokens));
     }
@@ -48,7 +47,7 @@ const getUseTweakConfigFromProps = (
   c: ControlMap<Target>,
   f: KeyToControl
 ): ControlMap<Target> => {
-  const tweakConfig: Record<string, Settings> = {};
+  const tweakConfig: Record<string, Schema> = {};
   for (const entry of tweaked) {
     let controlForKey;
     if (!c || !c[entry]) {
@@ -67,34 +66,36 @@ export const Twkr: React.FC<ITwkrProps> = ({
   keyToControl,
   children,
 }) => {
-  const [tweaked, setTweaked] = useState<Set<string>>(tweakMap);
-
-  const [tweakTracked, setTweakTracked] = useState(() =>
-    tweakable(target, handler, setTweaked)
-  );
-
-  const tweakConfig = useMemo(() => {
-    return getUseTweakConfigFromProps(
-      tweaked,
-      target,
-      controlMap,
-      keyToControl
-    );
-  }, [tweaked]);
-
-  // confirm this returns same reference if tweakConfig doesnt change
-  // lest ye olde infinite loop occurs in the effect below
-  // TODO: handle hardcoded name param (not sure how dynamic we need it tbh)
-  // TODO: ensure when key is added to tweakConfig existing tweakConfig
-  // values aren't clobbered by the original target value
-  const tweakControlled = useTweaks("test", tweakConfig);
+  const [tweaked, setTweaked] = useState<Set<string>>(() => new Set());
+  const [mounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    const update = { ...target, ...tweakControlled };
-    // @ts-ignore
-    // TODO: fix type here as it needs to be Record<keyof Target, string>
-    setTweakTracked(update);
-  }, [tweakControlled]);
+    setIsMounted(true);
+  }, []);
 
-  return children(tweakTracked);
+  const [tweakTracked] = useState(() => tweakable(target, handler, setTweaked));
+
+  return mounted ? (
+    <TweakedChildren
+      target={target}
+      tweaked={tweaked}
+      controlMap={controlMap}
+      keyToControl={keyToControl}
+      children={children}
+    />
+  ) : (
+    children(tweakTracked)
+  );
+};
+
+const TweakedChildren: React.FC<
+  ITwkrProps & { tweaked: Set<keyof Target> }
+> = ({ children, target, controlMap, keyToControl, tweaked }) => {
+  // @ts-ignore
+  // TODO: fix type error
+  const [values] = useControls(() =>
+    getUseTweakConfigFromProps(tweaked, target, controlMap, keyToControl)
+  );
+
+  return children(values);
 };

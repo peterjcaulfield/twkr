@@ -1,5 +1,6 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const path = require("path");
+const webpack = require("webpack");
 module.exports = {
   entry: "./src/example/index.tsx",
   mode: "development",
@@ -9,6 +10,10 @@ module.exports = {
         test: /\.tsx?$/,
         use: "ts-loader",
         exclude: /node_modules/,
+      },
+      {
+        test: /\.css$/i,
+        use: ["style-loader", "css-loader"],
       },
     ],
   },
@@ -22,6 +27,9 @@ module.exports = {
     contentBase: "./dist",
   },
   plugins: [
+    new webpack.ProvidePlugin({
+      regeneratorRuntime: "regenerator-runtime/runtime",
+    }),
     new HtmlWebpackPlugin({
       templateContent: `
             <!DOCTYPE html>
