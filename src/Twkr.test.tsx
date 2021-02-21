@@ -1,12 +1,12 @@
 import React from "react";
 import { Twkr } from "./";
-import { render } from "@testing-library/react";
-import { useTweaks } from "use-tweaks";
+import { render, cleanup } from "@testing-library/react";
+import { useControls } from "leva";
 
 // return same reference
-const tweaksReturn = { FOO: "BAR" };
-jest.mock("use-tweaks", () => ({
-  useTweaks: jest.fn(() => tweaksReturn),
+const levaReturn = { FOO: "BAR" };
+jest.mock("leva", () => ({
+  useControls: jest.fn(() => [levaReturn]),
 }));
 
 const tokens = {
@@ -14,19 +14,32 @@ const tokens = {
 };
 
 describe("Twkr test", () => {
-  test("target is proxied", () => {
+  afterEach(() => {
+    cleanup();
+    jest.clearAllMocks();
+  });
+
+  test("target controls default to using the target key/value", () => {
+    render(
+      <Twkr target={tokens}>{(tokens) => <span>{tokens.FOO}</span>}</Twkr>
+    );
+
+    expect(useControls).toHaveBeenCalled();
+    expect((useControls as jest.Mock).mock.calls[0][0]()).toEqual(tokens);
+  });
+
+  test("target controls can be mapped via controlMap", () => {
     const controlMap = {
       FOO: { value: "BAR" },
     };
     render(
-      <Twkr target={tokens} controlMap={controlMap}>
+      <Twkr key="bloop" target={tokens} controlMap={controlMap}>
         {(tokens) => <span>{tokens.FOO}</span>}
       </Twkr>
     );
 
-    expect(useTweaks).toHaveBeenLastCalledWith("test", {
-      FOO: { value: "BAR" },
-    });
+    expect(useControls).toHaveBeenCalled();
+    expect((useControls as jest.Mock).mock.calls[0][0]()).toEqual(controlMap);
   });
 
   test("target controls can be mapped via keyToControl", () => {
@@ -39,8 +52,9 @@ describe("Twkr test", () => {
       </Twkr>
     );
 
-    expect(useTweaks).toHaveBeenLastCalledWith("test", {
-      FOO: { value: "BAR" },
+    expect(useControls).toHaveBeenCalled();
+    expect((useControls as jest.Mock).mock.calls[0][0]()).toEqual({
+      FOO: keyToControl(tokens, "FOO"),
     });
   });
 });

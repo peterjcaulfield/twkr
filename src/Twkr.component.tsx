@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useControls } from "leva";
 import { Schema } from "leva/dist/declarations/src/types";
 
@@ -9,7 +9,7 @@ type KeyToControl = (target: Target, key: keyof Target) => Schema;
 
 interface ITwkrProps {
   target: Target;
-  controlMap?: ControlMap<Target>;
+  controlMap?: Schema;
   keyToControl?: KeyToControl;
   children: (t: Target) => React.ReactElement;
 }
@@ -22,20 +22,26 @@ type TweakTrack = React.Dispatch<React.SetStateAction<Set<string>>>;
 
 const tweakable = (
   t: Target,
-  getHandler: (u: TweakTrack) => IInterceptor,
-  cb: TweakTrack
-) => new Proxy(t, getHandler(cb));
+  getHandler: (
+    u: TweakTrack,
+    r: React.MutableRefObject<Set<keyof Target>>
+  ) => IInterceptor,
+  cb: TweakTrack,
+  usedTokensRef: React.MutableRefObject<Set<keyof Target>>
+) => new Proxy(t, getHandler(cb, usedTokensRef));
 
-const usedTokens = new Set<keyof Target>();
-const handler = (track: TweakTrack) => ({
+const handler = (
+  track: TweakTrack,
+  usedTokensRef: React.MutableRefObject<Set<keyof Target>>
+) => ({
   get(t: Target, prop: keyof Target) {
     // react doesn't bail out of renders even if state doesn't change so
     // we need to maintain a copy of the tracked keys to gate calls to setState
     // https://github.com/facebook/react/issues/14994
     // TODO: has own property check via Reflect somehow
-    if (!usedTokens.has(prop) && prop !== "toJSON") {
-      usedTokens.add(prop);
-      track(new Set(usedTokens));
+    if (!usedTokensRef.current.has(prop) && prop !== "toJSON") {
+      usedTokensRef.current.add(prop);
+      track(new Set(usedTokensRef.current));
     }
     return Reflect.get(t, prop);
   },
@@ -44,18 +50,22 @@ const handler = (track: TweakTrack) => ({
 const getUseTweakConfigFromProps = (
   tweaked: Set<keyof Target>,
   t: Target,
-  c: ControlMap<Target>,
+  c: Schema,
   f: KeyToControl
-): ControlMap<Target> => {
-  const tweakConfig: Record<string, Schema> = {};
+): Schema => {
+  const tweakConfig: Schema = {};
   for (const entry of tweaked) {
-    let controlForKey;
-    if (!c || !c[entry]) {
-      controlForKey = f ? f(t, entry) : undefined;
+    if (c && c[entry]) {
+      tweakConfig[entry] = c[entry];
+    } else if (f) {
+      // TODO fix type f(t, entry) returns a SchemaItem rather than a Schema
+      // but SchemaItem is not exposed as an export from leva yet
+      // @ts-ignore
+      tweakConfig[entry] = f(t, entry);
     } else {
-      controlForKey = c[entry];
+      // default to just using the value
+      tweakConfig[entry] = t[entry];
     }
-    tweakConfig[entry] = controlForKey;
   }
   return tweakConfig;
 };
@@ -66,6 +76,7 @@ export const Twkr: React.FC<ITwkrProps> = ({
   keyToControl,
   children,
 }) => {
+  const usedTokens = useRef<Set<string>>(new Set());
   const [tweaked, setTweaked] = useState<Set<string>>(() => new Set());
   const [mounted, setIsMounted] = useState(false);
 
@@ -73,7 +84,9 @@ export const Twkr: React.FC<ITwkrProps> = ({
     setIsMounted(true);
   }, []);
 
-  const [tweakTracked] = useState(() => tweakable(target, handler, setTweaked));
+  const [tweakTracked] = useState(() =>
+    tweakable(target, handler, setTweaked, usedTokens)
+  );
 
   return mounted ? (
     <TweakedChildren
