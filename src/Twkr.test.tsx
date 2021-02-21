@@ -33,7 +33,7 @@ describe("Twkr test", () => {
       FOO: { value: "BAR" },
     };
     render(
-      <Twkr key="bloop" target={tokens} controlMap={controlMap}>
+      <Twkr target={tokens} controlMap={controlMap}>
         {(tokens) => <span>{tokens.FOO}</span>}
       </Twkr>
     );
