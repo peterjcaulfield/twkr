@@ -26,9 +26,6 @@ const tweakable = (
 
 const handler = (usedTokensRef: React.MutableRefObject<Set<keyof Target>>) => ({
   get(t: Target, prop: keyof Target) {
-    // react doesn't bail out of renders even if state doesn't change so
-    // we need to maintain a copy of the tracked keys to gate calls to setState
-    // https://github.com/facebook/react/issues/14994
     // TODO: has own property check via Reflect somehow
     if (!usedTokensRef.current.has(prop) && prop !== "toJSON") {
       usedTokensRef.current.add(prop);
