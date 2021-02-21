@@ -18,22 +18,13 @@ interface IInterceptor {
   get: (t: Target, prop: string) => string;
 }
 
-type TweakTrack = React.Dispatch<React.SetStateAction<Set<string>>>;
-
 const tweakable = (
   t: Target,
-  getHandler: (
-    u: TweakTrack,
-    r: React.MutableRefObject<Set<keyof Target>>
-  ) => IInterceptor,
-  cb: TweakTrack,
+  getHandler: (r: React.MutableRefObject<Set<keyof Target>>) => IInterceptor,
   usedTokensRef: React.MutableRefObject<Set<keyof Target>>
-) => new Proxy(t, getHandler(cb, usedTokensRef));
+) => new Proxy(t, getHandler(usedTokensRef));
 
-const handler = (
-  track: TweakTrack,
-  usedTokensRef: React.MutableRefObject<Set<keyof Target>>
-) => ({
+const handler = (usedTokensRef: React.MutableRefObject<Set<keyof Target>>) => ({
   get(t: Target, prop: keyof Target) {
     // react doesn't bail out of renders even if state doesn't change so
     // we need to maintain a copy of the tracked keys to gate calls to setState
@@ -41,7 +32,6 @@ const handler = (
     // TODO: has own property check via Reflect somehow
     if (!usedTokensRef.current.has(prop) && prop !== "toJSON") {
       usedTokensRef.current.add(prop);
-      track(new Set(usedTokensRef.current));
     }
     return Reflect.get(t, prop);
   },
@@ -77,21 +67,18 @@ export const Twkr: React.FC<ITwkrProps> = ({
   children,
 }) => {
   const usedTokens = useRef<Set<string>>(new Set());
-  const [tweaked, setTweaked] = useState<Set<string>>(() => new Set());
   const [mounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  const [tweakTracked] = useState(() =>
-    tweakable(target, handler, setTweaked, usedTokens)
-  );
+  const [tweakTracked] = useState(() => tweakable(target, handler, usedTokens));
 
   return mounted ? (
     <TweakedChildren
       target={target}
-      tweaked={tweaked}
+      tweaked={usedTokens.current}
       controlMap={controlMap}
       keyToControl={keyToControl}
       children={children}
