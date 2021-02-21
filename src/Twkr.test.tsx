@@ -3,15 +3,13 @@ import { Twkr } from "./";
 import { render, cleanup } from "@testing-library/react";
 import { useControls } from "leva";
 
-// return same reference
-const levaReturn = { FOO: "BAR" };
-jest.mock("leva", () => ({
-  useControls: jest.fn(() => [levaReturn]),
-}));
-
 const tokens = {
   FOO: "BAR",
 };
+
+jest.mock("leva", () => ({
+  useControls: jest.fn(() => [tokens]),
+}));
 
 describe("Twkr test", () => {
   afterEach(() => {
@@ -22,6 +20,18 @@ describe("Twkr test", () => {
   test("target controls default to using the target key/value", () => {
     render(
       <Twkr target={tokens}>{(tokens) => <span>{tokens.FOO}</span>}</Twkr>
+    );
+
+    expect(useControls).toHaveBeenCalled();
+    expect((useControls as jest.Mock).mock.calls[0][0]()).toEqual(tokens);
+  });
+
+  test("target controls only generated for keys that are accessed", () => {
+    const partiallyUsed = { ...tokens, BAZ: "QUX" };
+    render(
+      <Twkr target={partiallyUsed}>
+        {(tokens) => <span>{tokens.FOO}</span>}
+      </Twkr>
     );
 
     expect(useControls).toHaveBeenCalled();
