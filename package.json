@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "jest src",
-    "dev": "webpack serve"
+    "dev": "webpack serve",
+    "build": "tsc"
   },
   "repository": {
     "type": "git",
@@ -39,8 +40,6 @@
   },
   "dependencies": {
     "@types/react": "^17.0.2",
-    "leva": "^0.3.1",
-    "tweakpane": "^1.5.9",
-    "use-tweaks": "^0.3.1"
+    "leva": "^0.3.1"
   }
 }

@@ -8,6 +8,9 @@
     "module": "esnext",
     "target": "es2017",
     "jsx": "react",
-    "baseUrl": "src"
-  }
+    "outDir": "dist",
+    "skipLibCheck": true
+  },
+  "include": ["src/index.ts"],
+  "exclude": ["node_modules", "**/*.spec.ts"]
 }
