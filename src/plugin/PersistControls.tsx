@@ -7,14 +7,21 @@ import { InputWithSettings } from "leva/dist/declarations/src/types";
 
 const copy = async (values: Target) => {
   try {
-    await navigator.clipboard.writeText(JSON.stringify(values));
+    await navigator.clipboard.writeText(JSON.stringify(values, null, 2));
   } catch (e) {
     alert(e);
   }
 };
 
-const normalize = (originalValues: Target) => {
-  return { value: originalValues };
+const copyDelta = (s1: Target, s2: Target) => {
+  const delta: Target = {};
+  for (const key of Object.keys(s2)) {
+    console.log(s1[key], s2[key]);
+    if (s1[key] !== s2[key]) {
+      delta[key] = s2[key];
+    }
+  }
+  copy(delta);
 };
 
 const formatState = (state: Record<string, InputWithSettings<string>>) => {
@@ -25,14 +32,8 @@ const formatState = (state: Record<string, InputWithSettings<string>>) => {
   return formatted;
 };
 
-const copyDelta = (s1: Target, s2: Target) => {
-  const delta: Target = {};
-  for (const key of Object.keys(s2)) {
-    if (s1[key] != s2[key]) {
-      delta[key] = s2[key];
-    }
-  }
-  copy(delta);
+const normalize = (originalValues: Target) => {
+  return { value: originalValues };
 };
 
 function PersistControls() {
