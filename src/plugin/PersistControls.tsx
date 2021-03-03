@@ -40,6 +40,8 @@ function PersistControls() {
   const store = useStoreContext();
   const [values, setValues] = useState(() => {
     const { persistence, ...values } = store.getData();
+    // TODO: adjust type as it should be Record<string, DataItem>
+    // but DataItem is not exposed
     return values as Record<string, InputWithSettings<string>>;
   });
   const { value: originalValues } = useInputContext();
