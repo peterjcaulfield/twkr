@@ -16,7 +16,6 @@ const copy = async (values: Target) => {
 const copyDelta = (s1: Target, s2: Target) => {
   const delta: Target = {};
   for (const key of Object.keys(s2)) {
-    console.log(s1[key], s2[key]);
     if (s1[key] !== s2[key]) {
       delta[key] = s2[key];
     }
@@ -58,7 +57,7 @@ function PersistControls() {
   return (
     <>
       <Row>
-        <button onClick={() => set(values)}>Save</button>
+        <button onClick={() => set(formatState(values))}>Save</button>
       </Row>
       <Row>
         <button onClick={() => set({})}>Clear</button>

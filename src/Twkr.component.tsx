@@ -5,7 +5,10 @@ import { get, set } from "./storage";
 import { persistControls } from "./plugin/PersistControls";
 
 export type Target = Record<string, string>;
-type KeyToControl = (target: Target, key: keyof typeof target) => Schema;
+type KeyToControl = (
+  target: Target,
+  key: keyof typeof target
+) => Schema | string;
 
 interface ITwkrProps {
   target: Target;
