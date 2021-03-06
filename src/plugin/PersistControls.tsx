@@ -64,7 +64,11 @@ function PersistControls() {
         <button onClick={() => set({})}>Clear</button>
       </Row>
       <Row>
-        <button onClick={() => copy(formatState(values))}>Copy</button>
+        <button
+          onClick={() => copy({ ...originalValues, ...formatState(values) })}
+        >
+          Copy
+        </button>
         <button onClick={() => copyDelta(originalValues, formatState(values))}>
           Copy Changed
         </button>

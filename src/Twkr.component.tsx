@@ -52,6 +52,7 @@ const sanitizedControlMappings = [
     control: (value: string) => ({
       value,
       min: 0,
+      // TODO: this is prob too large?
       max: Number.MAX_SAFE_INTEGER,
     }),
   },
