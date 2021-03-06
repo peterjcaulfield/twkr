@@ -9,7 +9,8 @@ const copy = async (values: Target) => {
   try {
     await navigator.clipboard.writeText(JSON.stringify(values, null, 2));
   } catch (e) {
-    alert(e);
+    console.error("Unable to copy tokens to clipboard");
+    console.error(e);
   }
 };
 
@@ -39,8 +40,8 @@ function PersistControls() {
   const store = useStoreContext();
   const [values, setValues] = useState(() => {
     const { persistence, ...values } = store.getData();
-    // TODO: adjust type as it should be Record<string, DataItem>
-    // but DataItem is not exposed
+    // should be Record<string, DataItem> but DataItem is not exposed in leva
+    // types
     return values as Record<string, InputWithSettings<string>>;
   });
   const { value: originalValues } = useInputContext();

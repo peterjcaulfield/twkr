@@ -5,10 +5,11 @@ import { get, set } from "./storage";
 import { persistControls } from "./plugin/PersistControls";
 
 export type Target = Record<string, string>;
+
 type KeyToControl = (
   target: Target,
   key: keyof typeof target
-) => Schema | string;
+) => Schema[keyof Schema] | string;
 
 interface ITwkrProps {
   target: Target;
@@ -21,18 +22,26 @@ interface IInterceptor {
   get: (t: Target, prop: keyof typeof t) => string;
 }
 
+type TargetKeys = Set<string | number | symbol>;
+
 const tweakable = (
   t: Target,
-  getHandler: (r: React.MutableRefObject<Set<keyof typeof t>>) => IInterceptor,
+  getHandler: (
+    ownKeys: TargetKeys,
+    r: React.MutableRefObject<Set<keyof typeof t>>
+  ) => IInterceptor,
   usedTokensRef: React.MutableRefObject<Set<keyof typeof t>>
-) => new Proxy(t, getHandler(usedTokensRef));
+) => new Proxy(t, getHandler(new Set(Reflect.ownKeys(t)), usedTokensRef));
 
-const handler = (usedTokensRef: React.MutableRefObject<Set<string>>) => ({
+const handler = (
+  ownKeys: TargetKeys,
+  usedTokensRef: React.MutableRefObject<Set<string>>
+) => ({
   get: (t: Target, prop: keyof typeof t) => {
-    // TODO: has own property check via Reflect somehow
-    if (!usedTokensRef.current.has(prop) && prop !== "toJSON") {
+    if (!usedTokensRef.current.has(prop) && ownKeys.has(prop)) {
       usedTokensRef.current.add(prop);
     }
+
     return Reflect.get(t, prop);
   },
 });
@@ -48,12 +57,14 @@ const sanitizedControlMappings = [
   },
 ];
 
-const getSantizedControlFromToken = (token: string) => {
-  let control: Schema;
+const getSanitizedSchemaItemFromToken = (
+  token: string
+): string | Schema[keyof Schema] => {
+  let schemaItem = {};
   for (let i = 0; i < sanitizedControlMappings.length; i++) {
     if (sanitizedControlMappings[i].re.test(token)) {
-      control = sanitizedControlMappings[i].control(token);
-      return control;
+      schemaItem = sanitizedControlMappings[i].control(token);
+      return schemaItem;
     }
   }
   return token;
@@ -70,20 +81,17 @@ const getUseTweakConfigFromProps = (
     if (c && c[entry]) {
       tweakConfig[entry] = c[entry];
     } else if (f) {
-      // TODO fix type f(t, entry) returns a SchemaItem rather than a Schema
-      // but SchemaItem is not exposed as an export from leva yet
-      // @ts-ignore
       tweakConfig[entry] = f(t, entry);
     } else {
-      // default to just using the value/sanitized control from value
-      // TODO fix type getSantizedControlFromToken(t, entry) returns a SchemaItem
-      // rather than a Schema but SchemaItem is not exposed as an export from leva yet
-      // @ts-ignore
-      tweakConfig[entry] = getSantizedControlFromToken(t[entry]);
+      tweakConfig[entry] = getSanitizedSchemaItemFromToken(t[entry]);
     }
   }
   return tweakConfig;
 };
+
+const getPersistControlsSchema = (originalTokenValues: Target) => ({
+  persistence: persistControls(originalTokenValues),
+});
 
 export const Twkr: React.FC<ITwkrProps> = ({
   target,
@@ -136,14 +144,12 @@ const TweakedChildren: React.FC<
   keyToControl,
   tweaked,
 }) => {
-  // @ts-ignore
-  // TODO: fix type error
-  // TODO: reset should re build the controls (use dep array API when available)
   const [values] = useControls(() => ({
-    persistence: persistControls(originalValues),
+    ...getPersistControlsSchema(originalValues),
     ...getUseTweakConfigFromProps(tweaked, target, controlMap, keyToControl),
   }));
 
-  // @ts-ignore
-  return <>{children(values)}</>;
+  const { persistence, ...tokens } = values;
+
+  return <>{children(tokens as Target)}</>;
 };

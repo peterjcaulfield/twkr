@@ -23,7 +23,7 @@ describe("Twkr test", () => {
     );
 
     expect(useControls).toHaveBeenCalled();
-    expect((useControls as jest.Mock).mock.calls[0][0]()).toEqual(tokens);
+    expect((useControls as jest.Mock).mock.calls[0][0]()).toMatchObject(tokens);
   });
 
   test("target controls only generated for keys that are accessed", () => {
@@ -35,7 +35,7 @@ describe("Twkr test", () => {
     );
 
     expect(useControls).toHaveBeenCalled();
-    expect((useControls as jest.Mock).mock.calls[0][0]()).toEqual(tokens);
+    expect((useControls as jest.Mock).mock.calls[0][0]()).toMatchObject(tokens);
   });
 
   test("target controls can be mapped via controlMap", () => {
@@ -49,7 +49,9 @@ describe("Twkr test", () => {
     );
 
     expect(useControls).toHaveBeenCalled();
-    expect((useControls as jest.Mock).mock.calls[0][0]()).toEqual(controlMap);
+    expect((useControls as jest.Mock).mock.calls[0][0]()).toMatchObject(
+      controlMap
+    );
   });
 
   test("target controls can be mapped via keyToControl", () => {
@@ -63,7 +65,7 @@ describe("Twkr test", () => {
     );
 
     expect(useControls).toHaveBeenCalled();
-    expect((useControls as jest.Mock).mock.calls[0][0]()).toEqual({
+    expect((useControls as jest.Mock).mock.calls[0][0]()).toMatchObject({
       FOO: keyToControl(tokens, "FOO"),
     });
   });
