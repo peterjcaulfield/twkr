@@ -36,10 +36,19 @@ const copy = async (values: Target) => {
   }
 };
 
+const isColorToken = (token: string) => /^#[a-zA-Z0-9]+$/.test(token);
+
+const compare = (a: string, b: string) => {
+  if (isColorToken(a) && isColorToken(b)) {
+    return a.toLowerCase() == b.toLowerCase();
+  }
+  return a == b;
+};
+
 const copyDelta = (s1: Target, s2: Target) => {
   const delta: Target = {};
   for (const key of Object.keys(s2)) {
-    if (s1[key] !== s2[key]) {
+    if (!compare(s1[key], s2[key])) {
       delta[key] = s2[key];
     }
   }
