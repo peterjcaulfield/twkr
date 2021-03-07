@@ -4,6 +4,28 @@ import { useStoreContext } from "leva";
 import { set } from "../storage";
 import { Target } from "../Twkr.component";
 import { InputWithSettings } from "leva/dist/declarations/src/types";
+import styled from "styled-components";
+import { darken, cssVar } from "polished";
+
+const Button = styled.button`
+  display: block;
+  outline: none;
+  font-size: inherit;
+  font-family: inherit;
+  border: none;
+  appearance: none;
+  font-weight: var(--fontWeights-button);
+  color: var(--colors-highlight3);
+  height: var(--sizes-rowHeight);
+  border-style: none;
+  border-radius: var(--radii-sm);
+  background-color: var(--colors-accent2);
+  cursor: pointer;
+  box-sizing: border-box;
+  &:active {
+    background-color: ${darken(0.1, cssVar("--colors-accent2") as string)};
+  }
+`;
 
 const copy = async (values: Target) => {
   try {
@@ -58,20 +80,20 @@ function PersistControls() {
   return (
     <>
       <Row>
-        <button onClick={() => set(formatState(values))}>Save</button>
+        <Button onClick={() => set(formatState(values))}>Save</Button>
       </Row>
       <Row>
-        <button onClick={() => set({})}>Clear</button>
+        <Button onClick={() => set({})}>Clear</Button>
       </Row>
       <Row>
-        <button
+        <Button
           onClick={() => copy({ ...originalValues, ...formatState(values) })}
         >
           Copy
-        </button>
-        <button onClick={() => copyDelta(originalValues, formatState(values))}>
+        </Button>
+        <Button onClick={() => copyDelta(originalValues, formatState(values))}>
           Copy Changed
-        </button>
+        </Button>
       </Row>
     </>
   );
