@@ -23,7 +23,10 @@ const Button = styled.button`
   cursor: pointer;
   box-sizing: border-box;
   &:active {
-    background-color: ${darken(0.1, cssVar("--colors-accent2") as string)};
+    background-color: ${darken(
+      0.1,
+      cssVar("--colors-accent2", "#fff") as string
+    )};
   }
 `;
 

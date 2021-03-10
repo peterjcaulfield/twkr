@@ -3,7 +3,7 @@ import { useControls } from "leva";
 import {
   Schema,
   FolderInput,
-  SpecialInputTypes,
+  // SpecialInputTypes,
 } from "leva/dist/declarations/src/types";
 import { get, set } from "./storage";
 import { persistControls } from "./plugin/PersistControls";
@@ -103,7 +103,10 @@ const getUseTweakConfigFromProps = (
     if (folder) {
       if (!tweakConfig[folder]) {
         const folderInput: FolderInput<any> = {
-          type: SpecialInputTypes.FOLDER,
+          // TODO: tests break if I try to use the enum :(
+          // type: SpecialInputTypes.FOLDER,
+          // @ts-ignore
+          type: "FOLDER",
           schema: {},
           settings: {
             collapsed: false,
