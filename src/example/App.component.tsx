@@ -5,8 +5,7 @@ import { Twkr, Target } from "../";
 const tokens = {
   color: "#fff",
   spacingM: "1rem",
-  dropShadow:
-    "1px 0 4px 0px rgba(194, 86, 8, 0.15), 1px 0 12px 0px rgba(40, 42, 46, 0.33)",
+  fontFamily: "Verdana",
 };
 
 const Button = styled.button`
@@ -29,11 +28,18 @@ const keyToControl = (t: Target, key: string) => {
 };
 
 export const App: React.FC = () => (
-  <Twkr keyToControl={keyToControl} target={tokens}>
-    {(tokens) => (
-      <ThemeProvider theme={tokens}>
-        <Button>Hello World</Button>
-      </ThemeProvider>
-    )}
-  </Twkr>
+  <>
+    <Twkr
+      target={tokens}
+      keyToControl={keyToControl}
+      tokenGroups={{ typography: new Set(["fontFamily"]) }}
+    >
+      {(tokens) => (
+        <ThemeProvider theme={tokens}>
+          {JSON.stringify(tokens)}
+          <Button>Hello World</Button>
+        </ThemeProvider>
+      )}
+    </Twkr>
+  </>
 );

@@ -1,9 +1,28 @@
 import React from "react";
 import { screen, render } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { createGlobalStyle } from "styled-components";
 const tokens = {
   FOO: "BAR",
 };
+
+const Theme = createGlobalStyle`
+    :root {
+        --fontWeights-button:  700;
+        --colors-highlight3: #fff;
+        --colors-accent2: papayawhip;
+        --sizes-rowHeight: 20px;
+        --radii-sm: 2px;
+    }
+`;
+
+const renderWithTheme = (component: React.ReactElement) =>
+  render(
+    <>
+      <Theme />
+      {component}
+    </>
+  );
 
 describe("Twkr test", () => {
   afterEach(() => {
@@ -19,7 +38,7 @@ describe("Twkr test", () => {
     }));
     const Twkr = require("../src/Twkr.component.tsx").Twkr;
 
-    render(
+    renderWithTheme(
       <Twkr target={tokens}>{(tokens: any) => <span>{tokens.FOO}</span>}</Twkr>
     );
 
@@ -39,7 +58,7 @@ describe("Twkr test", () => {
 
     const partiallyUsed = { ...tokens, BAZ: "QUX" };
 
-    render(
+    renderWithTheme(
       <Twkr target={partiallyUsed}>
         {(tokens: any) => <span>{tokens.FOO}</span>}
       </Twkr>
@@ -61,7 +80,7 @@ describe("Twkr test", () => {
     const controlMap = {
       FOO: { value: "BAR" },
     };
-    render(
+    renderWithTheme(
       <Twkr target={tokens} controlMap={controlMap}>
         {(tokens: any) => <span>{tokens.FOO}</span>}
       </Twkr>
@@ -83,7 +102,7 @@ describe("Twkr test", () => {
     const keyToControl = (t: Record<string, string>, key: keyof typeof t) => ({
       value: t[key],
     });
-    render(
+    renderWithTheme(
       <Twkr target={tokens} keyToControl={keyToControl}>
         {(tokens: any) => <span>{tokens.FOO}</span>}
       </Twkr>
@@ -102,7 +121,7 @@ describe("Twkr test", () => {
     }));
     const Twkr = require("../src/Twkr.component.tsx").Twkr;
 
-    render(
+    renderWithTheme(
       <Twkr target={tokens}>
         {(tokens: any) => <span>{JSON.stringify(tokens)}</span>}
       </Twkr>
@@ -133,7 +152,7 @@ describe("Twkr test", () => {
 
     const Twkr = require("../src/Twkr.component.tsx").Twkr;
 
-    render(
+    renderWithTheme(
       <Twkr target={tokens}>{(tokens: any) => <span>{tokens.FOO}</span>}</Twkr>
     );
 
