@@ -95,6 +95,79 @@ describe("Twkr test", () => {
     });
   });
 
+  test("tokens can be grouped in to folders", () => {
+    const useControlMock = jest.fn(() => [tokens]);
+    jest.doMock("leva", () => ({
+      useControls: useControlMock,
+    }));
+    const Twkr = require("../src/Twkr.component.tsx").Twkr;
+
+    const tokens = {
+      fontFamily: "verdana",
+    };
+
+    render(
+      <Twkr
+        target={tokens}
+        tokenGroups={{ typography: new Set(["fontFamily"]) }}
+      >
+        {(tokens: any) => <span>{tokens.fontFamily}</span>}
+      </Twkr>
+    );
+
+    const expectedConfig = {
+      typography: {
+        type: "FOLDER",
+        schema: {
+          fontFamily: "verdana",
+        },
+        settings: {
+          collapsed: true,
+        },
+      },
+    };
+
+    expect(useControlMock).toHaveBeenCalled();
+    expect((useControlMock as jest.Mock).mock.calls[0][0]()).toMatchObject(
+      expectedConfig
+    );
+  });
+
+  test("a folder is generated for unaccessed tokens", () => {
+    const useControlMock = jest.fn(() => [tokens]);
+    jest.doMock("leva", () => ({
+      useControls: useControlMock,
+    }));
+    const Twkr = require("../src/Twkr.component.tsx").Twkr;
+
+    const tokens = {
+      FOO: "BAR",
+      fontFamily: "verdana",
+    };
+
+    render(
+      <Twkr target={tokens}>{(tokens: any) => <span>{tokens.FOO}</span>}</Twkr>
+    );
+
+    const expectedConfig = {
+      FOO: "BAR",
+      "Unused Tokens": {
+        type: "FOLDER",
+        schema: {
+          fontFamily: "verdana",
+        },
+        settings: {
+          collapsed: true,
+        },
+      },
+    };
+
+    expect(useControlMock).toHaveBeenCalled();
+    expect((useControlMock as jest.Mock).mock.calls[0][0]()).toMatchObject(
+      expectedConfig
+    );
+  });
+
   test("prototype property accesses are not tracked", () => {
     const useControlMock = jest.fn(() => [tokens]);
     jest.doMock("leva", () => ({
@@ -122,7 +195,7 @@ describe("Twkr test", () => {
   test("persistence works", async () => {
     const tokens = {
       FOO: "BAR",
-      COLOR: "#FFFFFF",
+      COLOR: "#ffffff",
     };
     jest.doMock("leva", () => jest.requireActual("leva"));
     const storageMock = {
@@ -146,6 +219,7 @@ describe("Twkr test", () => {
     userEvent.click(screen.getByText("Save"));
 
     const expectedSave = {
+      ...tokens,
       FOO: "BAZ",
     };
 

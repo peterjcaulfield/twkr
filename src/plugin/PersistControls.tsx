@@ -58,10 +58,19 @@ const copyDelta = (s1: Target, s2: Target) => {
   copy(delta);
 };
 
+/**
+ * Values that are contained with in folders keyed in to the leva state using
+ * the folder path. We want the original key for the token when persisting.
+ */
+const parseOriginalTokenKeyFromStateKey = (stateKey: string) => {
+  const [key] = stateKey.split(".").reverse();
+  return key;
+};
+
 const formatState = (state: Record<string, InputWithSettings<string>>) => {
   const formatted: Target = {};
   for (const key of Object.keys(state)) {
-    formatted[key] = state[key].value;
+    formatted[parseOriginalTokenKeyFromStateKey(key)] = state[key].value;
   }
   return formatted;
 };

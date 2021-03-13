@@ -96,24 +96,26 @@ const getUseTweakConfigFromProps = (
   f: KeyToControl,
   folders: Folders = {}
 ): Schema => {
-  const tweakConfig: Schema = {};
-  for (const entry of tweaked) {
+  const trackedTweakConfig: Schema = {};
+  const untrackedTweakConfig: Schema = {};
+  for (const entry of Object.keys(t)) {
+    let configForKey = tweaked.has(entry)
+      ? trackedTweakConfig
+      : untrackedTweakConfig;
     const folder = getFolderForToken(entry, folders);
 
-    if (folder) {
-      if (!tweakConfig[folder]) {
-        const folderInput: FolderInput<any> = {
-          // TODO: tests break if I try to use the enum :(
-          // type: SpecialInputTypes.FOLDER,
-          // @ts-ignore
-          type: "FOLDER",
-          schema: {},
-          settings: {
-            collapsed: false,
-          },
-        };
-        tweakConfig[folder] = folderInput;
-      }
+    if (folder && !configForKey[folder]) {
+      const folderInput: FolderInput<any> = {
+        // TODO: tests break if I try to use the enum :(
+        // type: SpecialInputTypes.FOLDER,
+        // @ts-ignore
+        type: "FOLDER",
+        schema: {},
+        settings: {
+          collapsed: true,
+        },
+      };
+      configForKey[folder] = folderInput;
     }
 
     let control;
@@ -126,12 +128,29 @@ const getUseTweakConfigFromProps = (
     }
 
     if (folder) {
-      (tweakConfig[folder] as FolderInput<any>).schema[entry] = control;
+      (configForKey[folder] as FolderInput<any>).schema[entry] = control;
     } else {
-      tweakConfig[entry] = control;
+      configForKey[entry] = control;
     }
   }
-  return tweakConfig;
+
+  const config: Schema = {};
+
+  if (Object.keys(untrackedTweakConfig).length) {
+    const untrackedTokenFolder: FolderInput<any> = {
+      // TODO: tests break if I try to use the enum :(
+      // type: SpecialInputTypes.FOLDER,
+      // @ts-ignore
+      type: "FOLDER",
+      schema: untrackedTweakConfig,
+      settings: {
+        collapsed: true,
+      },
+    };
+    config["Unused Tokens"] = untrackedTokenFolder;
+  }
+
+  return { ...trackedTweakConfig, ...config };
 };
 
 const getPersistControlsSchema = (originalTokenValues: Target) => ({
