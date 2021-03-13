@@ -19,7 +19,7 @@ type KeyToControl = (
   key: keyof typeof target
 ) => Schema[keyof Schema] | string;
 
-interface ITwkrProps {
+export interface ITwkrProps {
   target: Target;
   controlMap?: Schema;
   keyToControl?: KeyToControl;

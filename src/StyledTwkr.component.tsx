@@ -1,17 +1,21 @@
 import React from "react";
 import { ThemeProvider, useTheme } from "styled-components";
-import { Twkr } from "./";
+import { Twkr, ITwkrProps } from "./";
 
-export const StyledTwkr: React.FC<{
+type StyledTwkrProps = Omit<ITwkrProps, "target" | "children"> & {
   children: React.ReactElement;
-  peristenceKey?: string;
-}> = (props) => {
+};
+
+export const StyledTwkr: React.FC<StyledTwkrProps> = ({
+  children,
+  ...unhandledProps
+}) => {
   const trackedTheme = { ...useTheme() };
   return (
-    <Twkr target={trackedTheme} persistenceKey={props.peristenceKey}>
+    <Twkr target={trackedTheme} {...unhandledProps}>
       {(tokens: any) => (
         <ThemeProvider theme={() => tokens}>
-          {React.cloneElement(props.children)}
+          {React.cloneElement(children)}
         </ThemeProvider>
       )}
     </Twkr>
