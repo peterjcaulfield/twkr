@@ -135,6 +135,18 @@ const getUseTweakConfigFromProps = (
   }
 
   const config: Schema = {};
+  const trackedTokenFolder: FolderInput<any> = {
+    // TODO: tests break if I try to use the enum :(
+    // type: SpecialInputTypes.FOLDER,
+    // @ts-ignore
+    type: "FOLDER",
+    schema: trackedTweakConfig,
+    settings: {
+      collapsed: false,
+    },
+  };
+
+  config["Used Tokens"] = trackedTokenFolder;
 
   if (Object.keys(untrackedTweakConfig).length) {
     const untrackedTokenFolder: FolderInput<any> = {
@@ -150,7 +162,7 @@ const getUseTweakConfigFromProps = (
     config["Unused Tokens"] = untrackedTokenFolder;
   }
 
-  return { ...trackedTweakConfig, ...config };
+  return config;
 };
 
 const getPersistControlsSchema = (originalTokenValues: Target) => ({

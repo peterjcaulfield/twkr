@@ -5,6 +5,14 @@ const tokens = {
   FOO: "BAR",
 };
 
+const folderize = (folder: string, schema: any, collapsed = false) => ({
+  type: "FOLDER",
+  schema,
+  settings: {
+    collapsed,
+  },
+});
+
 describe("Twkr test", () => {
   afterEach(() => {
     jest.clearAllMocks();
@@ -12,7 +20,7 @@ describe("Twkr test", () => {
     jest.resetModules();
   });
 
-  test("target controls default to using the target key/value", () => {
+  test.only("target controls default to using the target key/value", () => {
     const useControlMock = jest.fn(() => [tokens]);
     jest.doMock("leva", () => ({
       useControls: useControlMock,

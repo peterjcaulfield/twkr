@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { createPlugin, Row, useInputContext } from "leva/plugins";
+import { createPlugin, Row, useInputContext } from "leva/plugin";
 import { useStoreContext } from "leva";
 import { set } from "../storage";
 import { Target } from "../Twkr.component";
 import { InputWithSettings } from "leva/dist/declarations/src/types";
 import styled from "styled-components";
-import { darken, cssVar } from "polished";
+import { darken } from "polished";
 
 const Button = styled.button`
   display: block;
@@ -14,20 +14,17 @@ const Button = styled.button`
   font-family: inherit;
   border: none;
   appearance: none;
-  font-weight: var(--fontWeights-button);
-  color: var(--colors-highlight3);
-  height: var(--sizes-rowHeight);
+  color: #fefefe;
+  height: 24px;
   border-style: none;
-  border-radius: var(--radii-sm);
-  background-color: var(--colors-accent2);
+  border-radius: 3px;
+  background-color: #007bff;
   cursor: pointer;
   box-sizing: border-box;
   &:active {
-    background-color: ${darken(
-      0.1,
-      cssVar("--colors-accent2", "#fff") as string
-    )};
+    background-color: ${darken(0.1, "#007bff")};
   }
+  margin-bottom: 5px;
 `;
 
 const copy = async (values: Target) => {
@@ -112,6 +109,8 @@ function PersistControls() {
         >
           Copy
         </Button>
+      </Row>
+      <Row>
         <Button onClick={() => copyDelta(originalValues, formatState(values))}>
           Copy Changed
         </Button>
