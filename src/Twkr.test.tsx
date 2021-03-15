@@ -6,10 +6,12 @@ const tokens = {
 };
 
 const folderize = (folder: string, schema: any, collapsed = false) => ({
-  type: "FOLDER",
-  schema,
-  settings: {
-    collapsed,
+  [folder]: {
+    type: "FOLDER",
+    schema,
+    settings: {
+      collapsed,
+    },
   },
 });
 
@@ -20,7 +22,7 @@ describe("Twkr test", () => {
     jest.resetModules();
   });
 
-  test.only("target controls default to using the target key/value", () => {
+  test("target controls default to using the target key/value", () => {
     const useControlMock = jest.fn(() => [tokens]);
     jest.doMock("leva", () => ({
       useControls: useControlMock,
@@ -33,11 +35,11 @@ describe("Twkr test", () => {
 
     expect(useControlMock).toHaveBeenCalled();
     expect((useControlMock as jest.Mock).mock.calls[0][0]()).toMatchObject(
-      tokens
+      folderize("Used Tokens", tokens)
     );
   });
 
-  test("target controls only generated for keys that are accessed", () => {
+  test("target controls are separated by keys that are accessed", () => {
     const useControlMock = jest.fn(() => [tokens]);
     jest.doMock("leva", () => ({
       useControls: useControlMock,
@@ -45,7 +47,8 @@ describe("Twkr test", () => {
 
     const Twkr = require("../src/Twkr.component.tsx").Twkr;
 
-    const partiallyUsed = { ...tokens, BAZ: "QUX" };
+    const unusedTokens = { BAZ: "QUX" };
+    const partiallyUsed = { ...tokens, ...unusedTokens };
 
     render(
       <Twkr target={partiallyUsed}>
@@ -54,9 +57,10 @@ describe("Twkr test", () => {
     );
 
     expect(useControlMock).toHaveBeenCalled();
-    expect((useControlMock as jest.Mock).mock.calls[0][0]()).toMatchObject(
-      tokens
-    );
+    expect((useControlMock as jest.Mock).mock.calls[0][0]()).toMatchObject({
+      ...folderize("Used Tokens", tokens),
+      ...folderize("Unused Tokens", unusedTokens, true),
+    });
   });
 
   test("target controls can be mapped via controlMap", () => {
@@ -77,7 +81,7 @@ describe("Twkr test", () => {
 
     expect(useControlMock).toHaveBeenCalled();
     expect((useControlMock as jest.Mock).mock.calls[0][0]()).toMatchObject(
-      controlMap
+      folderize("Used Tokens", controlMap)
     );
   });
 
@@ -98,9 +102,11 @@ describe("Twkr test", () => {
     );
 
     expect(useControlMock).toHaveBeenCalled();
-    expect((useControlMock as jest.Mock).mock.calls[0][0]()).toMatchObject({
-      FOO: keyToControl(tokens, "FOO"),
-    });
+    expect((useControlMock as jest.Mock).mock.calls[0][0]()).toMatchObject(
+      folderize("Used Tokens", {
+        FOO: keyToControl(tokens, "FOO"),
+      })
+    );
   });
 
   test("tokens can be grouped in to folders", () => {
@@ -137,42 +143,7 @@ describe("Twkr test", () => {
 
     expect(useControlMock).toHaveBeenCalled();
     expect((useControlMock as jest.Mock).mock.calls[0][0]()).toMatchObject(
-      expectedConfig
-    );
-  });
-
-  test("a folder is generated for unaccessed tokens", () => {
-    const useControlMock = jest.fn(() => [tokens]);
-    jest.doMock("leva", () => ({
-      useControls: useControlMock,
-    }));
-    const Twkr = require("../src/Twkr.component.tsx").Twkr;
-
-    const tokens = {
-      FOO: "BAR",
-      fontFamily: "verdana",
-    };
-
-    render(
-      <Twkr target={tokens}>{(tokens: any) => <span>{tokens.FOO}</span>}</Twkr>
-    );
-
-    const expectedConfig = {
-      FOO: "BAR",
-      "Unused Tokens": {
-        type: "FOLDER",
-        schema: {
-          fontFamily: "verdana",
-        },
-        settings: {
-          collapsed: true,
-        },
-      },
-    };
-
-    expect(useControlMock).toHaveBeenCalled();
-    expect((useControlMock as jest.Mock).mock.calls[0][0]()).toMatchObject(
-      expectedConfig
+      folderize("Used Tokens", expectedConfig)
     );
   });
 
@@ -191,7 +162,7 @@ describe("Twkr test", () => {
 
     expect(useControlMock).toHaveBeenCalled();
     expect((useControlMock as jest.Mock).mock.calls[0][0]()).toMatchObject(
-      tokens
+      folderize("Used Tokens", tokens)
     );
     expect(
       Object.keys((useControlMock as jest.Mock).mock.calls[0][0]()).indexOf(
@@ -218,7 +189,9 @@ describe("Twkr test", () => {
       <Twkr target={tokens}>{(tokens: any) => <span>{tokens.FOO}</span>}</Twkr>
     );
 
-    const input = document.getElementById("FOO") as HTMLInputElement;
+    const input = document.getElementById(
+      "leva__Used Tokens.FOO"
+    ) as HTMLInputElement;
     input.setSelectionRange(0, 3);
 
     userEvent.type(input, "{del}");
