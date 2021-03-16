@@ -109,7 +109,7 @@ describe("Twkr test", () => {
     );
   });
 
-  test("tokens can be grouped in to folders", () => {
+  test("tokens can be grouped in to folders via tokenGroups", () => {
     const useControlMock = jest.fn(() => [tokens]);
     jest.doMock("leva", () => ({
       useControls: useControlMock,
@@ -125,6 +125,47 @@ describe("Twkr test", () => {
         target={tokens}
         tokenGroups={{ typography: new Set(["fontFamily"]) }}
       >
+        {(tokens: any) => <span>{tokens.fontFamily}</span>}
+      </Twkr>
+    );
+
+    const expectedConfig = {
+      typography: {
+        type: "FOLDER",
+        schema: {
+          fontFamily: "verdana",
+        },
+        settings: {
+          collapsed: true,
+        },
+      },
+    };
+
+    expect(useControlMock).toHaveBeenCalled();
+    expect((useControlMock as jest.Mock).mock.calls[0][0]()).toMatchObject(
+      folderize("Used Tokens", expectedConfig)
+    );
+  });
+
+  test("tokens can be grouped in to folders via keyToGroup", () => {
+    const useControlMock = jest.fn(() => [tokens]);
+    jest.doMock("leva", () => ({
+      useControls: useControlMock,
+    }));
+    const Twkr = require("../src/Twkr.component.tsx").Twkr;
+
+    const tokens = {
+      fontFamily: "verdana",
+    };
+
+    const keyToGroup = (key: string) => {
+      if (key === "fontFamily") return "typography";
+
+      return null;
+    };
+
+    render(
+      <Twkr target={tokens} keyToGroup={keyToGroup}>
         {(tokens: any) => <span>{tokens.fontFamily}</span>}
       </Twkr>
     );

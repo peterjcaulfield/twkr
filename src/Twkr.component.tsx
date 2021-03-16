@@ -19,6 +19,8 @@ type KeyToControl = (
   key: keyof typeof target
 ) => Schema[keyof Schema] | string;
 
+type KeyToGroup = (key: string) => string | null;
+
 export interface ITwkrProps {
   target: Target;
   controlMap?: Schema;
@@ -28,6 +30,7 @@ export interface ITwkrProps {
   // it should be used as a _suffix to the root key
   persistenceKey?: string;
   tokenGroups?: Folders;
+  keyToGroup?: KeyToGroup;
 }
 
 interface IInterceptor {
@@ -83,39 +86,47 @@ const getSanitizedSchemaItemFromToken = (
   return token;
 };
 
-const getFolderForToken = (key: string, folders: Folders) => {
+const noop = (): null => null;
+const getFolderForToken = (
+  key: string,
+  folders: Folders,
+  keyToGroup: KeyToGroup = noop
+) => {
   const folder = Object.entries(folders).find(([_, tokens]) => tokens.has(key));
 
-  return folder ? folder[0] : null;
+  return folder ? folder[0] : keyToGroup(key);
 };
 
+const createFolder = (schema = {}, collapsed = false): FolderInput<any> => ({
+  // @ts-ignore
+  type: "FOLDER",
+  schema,
+  settings: {
+    collapsed,
+  },
+});
+
+// TODO handle keyToGroup here
 const getUseTweakConfigFromProps = (
   tweaked: Set<keyof typeof t>,
   t: Target,
   c: Schema,
   f: KeyToControl,
+  g: KeyToGroup,
   folders: Folders = {}
 ): Schema => {
   const trackedTweakConfig: Schema = {};
   const untrackedTweakConfig: Schema = {};
+
   for (const entry of Object.keys(t)) {
     let configForKey = tweaked.has(entry)
       ? trackedTweakConfig
       : untrackedTweakConfig;
-    const folder = getFolderForToken(entry, folders);
+
+    const folder = getFolderForToken(entry, folders, g);
 
     if (folder && !configForKey[folder]) {
-      const folderInput: FolderInput<any> = {
-        // TODO: tests break if I try to use the enum :(
-        // type: SpecialInputTypes.FOLDER,
-        // @ts-ignore
-        type: "FOLDER",
-        schema: {},
-        settings: {
-          collapsed: true,
-        },
-      };
-      configForKey[folder] = folderInput;
+      configForKey[folder] = createFolder({}, true);
     }
 
     let control;
@@ -135,31 +146,11 @@ const getUseTweakConfigFromProps = (
   }
 
   const config: Schema = {};
-  const trackedTokenFolder: FolderInput<any> = {
-    // TODO: tests break if I try to use the enum :(
-    // type: SpecialInputTypes.FOLDER,
-    // @ts-ignore
-    type: "FOLDER",
-    schema: trackedTweakConfig,
-    settings: {
-      collapsed: false,
-    },
-  };
 
-  config["Used Tokens"] = trackedTokenFolder;
+  config["Used Tokens"] = createFolder(trackedTweakConfig);
 
   if (Object.keys(untrackedTweakConfig).length) {
-    const untrackedTokenFolder: FolderInput<any> = {
-      // TODO: tests break if I try to use the enum :(
-      // type: SpecialInputTypes.FOLDER,
-      // @ts-ignore
-      type: "FOLDER",
-      schema: untrackedTweakConfig,
-      settings: {
-        collapsed: true,
-      },
-    };
-    config["Unused Tokens"] = untrackedTokenFolder;
+    config["Unused Tokens"] = createFolder(untrackedTweakConfig, true);
   }
 
   return config;
@@ -173,6 +164,7 @@ export const Twkr: React.FC<ITwkrProps> = ({
   target,
   controlMap,
   keyToControl,
+  keyToGroup,
   children,
   tokenGroups,
 }) => {
@@ -204,6 +196,7 @@ export const Twkr: React.FC<ITwkrProps> = ({
       tweaked={usedTokens.current}
       controlMap={controlMap}
       keyToControl={keyToControl}
+      keyToGroup={keyToGroup}
       children={children}
       tokenGroups={tokenGroups}
     />
@@ -220,6 +213,7 @@ const TweakedChildren: React.FC<
   target,
   controlMap,
   keyToControl,
+  keyToGroup,
   tweaked,
   tokenGroups,
 }) => {
@@ -230,6 +224,7 @@ const TweakedChildren: React.FC<
       target,
       controlMap,
       keyToControl,
+      keyToGroup,
       tokenGroups
     ),
   }));
