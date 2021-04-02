@@ -6,7 +6,8 @@
   "scripts": {
     "test": "jest src",
     "dev": "webpack serve",
-    "build": "tsc && cp package.json dist"
+    "build": "tsc && cp package.json dist",
+    "tsc": "tsc --noEmit"
   },
   "repository": {
     "type": "git",
