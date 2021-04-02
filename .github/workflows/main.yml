@@ -24,7 +24,7 @@ jobs:
         run: npm install
 
       - name: Check types
-        run: npm tsc
+        run: npm run tsc
 
       - name: Unit test
         run: npm test
