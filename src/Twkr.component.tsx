@@ -1,100 +1,232 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { Schema, Settings } from "use-tweaks/dist/types";
-import { useTweaks } from "use-tweaks";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useControls } from "leva";
+import { Schema, FolderInput } from "leva/dist/declarations/src/types";
+// we gotta import the enum from src: https://github.com/kulshekhar/ts-jest/issues/1229#issuecomment-569906667
+import { SpecialInputs } from "leva/src/types";
+import { get, set } from "./storage";
+import { persistControls } from "./plugin/PersistControls";
 
-type Target = Record<string, string>;
-type Control<T> = Record<keyof T, Settings>;
-type ControlMap<T> = Control<T>;
-type KeyToControl = (target: Target, key: keyof Target) => Settings;
+export type Target = Record<string, string>;
 
-const tweakMap = new Set<string>();
+type Folders = {
+  [key: string]: Set<string>;
+};
 
-interface ITwkrProps {
+type KeyToControl = (
+  target: Target,
+  key: keyof typeof target
+) => Schema[keyof Schema] | string;
+
+type KeyToGroup = (key: string) => string | null;
+
+export interface ITwkrProps {
   target: Target;
-  controlMap?: ControlMap<Target>;
+  controlMap?: Schema;
   keyToControl?: KeyToControl;
-  children: (t: Target) => React.ReactElement;
+  children: (t: Target) => any;
+  // TODO: propagate persistence key to storage somehow
+  // it should be used as a _suffix to the root key
+  persistenceKey?: string;
+  tokenGroups?: Folders;
+  keyToGroup?: KeyToGroup;
 }
 
 interface IInterceptor {
-  get: (t: Target, prop: string) => string;
+  get: (t: Target, prop: keyof typeof t) => string;
 }
 
-type TweakTrack = React.Dispatch<React.SetStateAction<Set<string>>>;
+type TargetKeys = Set<string | number | symbol>;
 
 const tweakable = (
   t: Target,
-  getHandler: (u: TweakTrack) => IInterceptor,
-  cb: TweakTrack
-) => new Proxy(t, getHandler(cb));
+  getHandler: (
+    ownKeys: TargetKeys,
+    r: React.MutableRefObject<Set<keyof typeof t>>
+  ) => IInterceptor,
+  usedTokensRef: React.MutableRefObject<Set<keyof typeof t>>
+) => new Proxy(t, getHandler(new Set(Reflect.ownKeys(t)), usedTokensRef));
 
-const usedTokens = new Set<keyof Target>();
-const handler = (track: TweakTrack) => ({
-  get(t: Target, prop: keyof Target) {
-    // react doesn't bail out of renders even if state doesn't change so
-    // we need to maintain a copy of the tracked keys to gate calls to setState
-    // https://github.com/facebook/react/issues/14994
-    if (!usedTokens.has(prop)) {
-      usedTokens.add(prop);
-      track(new Set(usedTokens));
+const handler = (
+  ownKeys: TargetKeys,
+  usedTokensRef: React.MutableRefObject<Set<string>>
+) => ({
+  get: (t: Target, prop: keyof typeof t) => {
+    if (!usedTokensRef.current.has(prop) && ownKeys.has(prop)) {
+      usedTokensRef.current.add(prop);
     }
+
     return Reflect.get(t, prop);
   },
 });
 
-const getUseTweakConfigFromProps = (
-  tweaked: Set<keyof Target>,
-  t: Target,
-  c: ControlMap<Target>,
-  f: KeyToControl
-): ControlMap<Target> => {
-  const tweakConfig: Record<string, Settings> = {};
-  for (const entry of tweaked) {
-    let controlForKey;
-    if (!c || !c[entry]) {
-      controlForKey = f ? f(t, entry) : undefined;
-    } else {
-      controlForKey = c[entry];
+const sanitizedControlMappings = [
+  {
+    re: /^\d+px/, // pixel value strings
+    control: (value: string) => ({
+      value,
+      min: 0,
+      // TODO: this is prob too large?
+      max: Number.MAX_SAFE_INTEGER,
+    }),
+  },
+];
+
+const getSanitizedSchemaItemFromToken = (
+  token: string
+): string | Schema[keyof Schema] => {
+  let schemaItem = {};
+  for (let i = 0; i < sanitizedControlMappings.length; i++) {
+    if (sanitizedControlMappings[i].re.test(token)) {
+      schemaItem = sanitizedControlMappings[i].control(token);
+      return schemaItem;
     }
-    tweakConfig[entry] = controlForKey;
   }
-  return tweakConfig;
+  return token;
 };
+
+const noop = (): null => null;
+const getFolderForToken = (
+  key: string,
+  folders: Folders,
+  keyToGroup: KeyToGroup = noop
+) => {
+  const folder = Object.entries(folders).find(([_, tokens]) => tokens.has(key));
+
+  return folder ? folder[0] : keyToGroup(key);
+};
+
+const createFolder = (schema = {}, collapsed = false): FolderInput<any> => ({
+  type: SpecialInputs.FOLDER,
+  schema,
+  settings: {
+    collapsed,
+  },
+});
+
+// TODO handle keyToGroup here
+const getUseTweakConfigFromProps = (
+  tweaked: Set<keyof typeof t>,
+  t: Target,
+  c: Schema,
+  f: KeyToControl,
+  g: KeyToGroup,
+  folders: Folders = {}
+): Schema => {
+  const trackedTweakConfig: Schema = {};
+  const untrackedTweakConfig: Schema = {};
+
+  for (const entry of Object.keys(t)) {
+    let configForKey = tweaked.has(entry)
+      ? trackedTweakConfig
+      : untrackedTweakConfig;
+
+    const folder = getFolderForToken(entry, folders, g);
+
+    if (folder && !configForKey[folder]) {
+      configForKey[folder] = createFolder({}, true);
+    }
+
+    let control;
+    if (c && c[entry]) {
+      control = c[entry];
+    } else if (f) {
+      control = f(t, entry);
+    } else {
+      control = getSanitizedSchemaItemFromToken(t[entry]);
+    }
+
+    if (folder) {
+      (configForKey[folder] as FolderInput<any>).schema[entry] = control;
+    } else {
+      configForKey[entry] = control;
+    }
+  }
+
+  const config: Schema = {};
+
+  config["Used Tokens"] = createFolder(trackedTweakConfig);
+
+  if (Object.keys(untrackedTweakConfig).length) {
+    config["Unused Tokens"] = createFolder(untrackedTweakConfig, true);
+  }
+
+  return config;
+};
+
+const getPersistControlsSchema = (originalTokenValues: Target) => ({
+  persistence: persistControls(originalTokenValues),
+});
 
 export const Twkr: React.FC<ITwkrProps> = ({
   target,
   controlMap,
   keyToControl,
+  keyToGroup,
   children,
+  tokenGroups,
 }) => {
-  const [tweaked, setTweaked] = useState<Set<string>>(tweakMap);
+  const usedTokens = useRef<Set<string>>(new Set());
+  const [mounted, setIsMounted] = useState(false);
 
-  const [tweakTracked, setTweakTracked] = useState(() =>
-    tweakable(target, handler, setTweaked)
+  const hydratedTarget = useMemo(
+    () => ({
+      ...target,
+      ...get(),
+    }),
+    [target]
   );
 
-  const tweakConfig = useMemo(() => {
-    return getUseTweakConfigFromProps(
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    return () => set(hydratedTarget);
+  }, [hydratedTarget]);
+
+  const [tweakTracked] = useState(() => tweakable(target, handler, usedTokens));
+
+  return mounted ? (
+    <TweakedChildren
+      originalValues={target}
+      target={hydratedTarget}
+      tweaked={usedTokens.current}
+      controlMap={controlMap}
+      keyToControl={keyToControl}
+      keyToGroup={keyToGroup}
+      children={children}
+      tokenGroups={tokenGroups}
+    />
+  ) : (
+    children(tweakTracked)
+  );
+};
+
+const TweakedChildren: React.FC<
+  ITwkrProps & { tweaked: Set<string>; originalValues: Target }
+> = ({
+  children,
+  originalValues,
+  target,
+  controlMap,
+  keyToControl,
+  keyToGroup,
+  tweaked,
+  tokenGroups,
+}) => {
+  const [values] = useControls(() => ({
+    ...getPersistControlsSchema(originalValues),
+    ...getUseTweakConfigFromProps(
       tweaked,
       target,
       controlMap,
-      keyToControl
-    );
-  }, [tweaked]);
+      keyToControl,
+      keyToGroup,
+      tokenGroups
+    ),
+  }));
 
-  // confirm this returns same reference if tweakConfig doesnt change
-  // lest ye olde infinite loop occurs in the effect below
-  // TODO: handle hardcoded name param (not sure how dynamic we need it tbh)
-  // TODO: ensure when key is added to tweakConfig existing tweakConfig
-  // values aren't clobbered by the original target value
-  const tweakControlled = useTweaks("test", tweakConfig);
+  const { persistence, ...tokens } = values;
 
-  useEffect(() => {
-    const update = { ...target, ...tweakControlled };
-    // @ts-ignore
-    // TODO: fix type here as it needs to be Record<keyof Target, string>
-    setTweakTracked(update);
-  }, [tweakControlled]);
-
-  return children(tweakTracked);
+  return <>{children(tokens as Target)}</>;
 };

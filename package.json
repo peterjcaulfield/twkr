@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "jest src",
-    "dev": "webpack serve"
+    "dev": "webpack serve",
+    "build": "tsc && cp package.json dist",
+    "tsc": "tsc --noEmit"
   },
   "repository": {
     "type": "git",
@@ -20,13 +22,17 @@
   "homepage": "https://github.com/peterjcaulfield/twkr#readme",
   "devDependencies": {
     "@testing-library/react": "^11.2.5",
+    "@testing-library/user-event": "^12.8.1",
+    "@types/classnames": "^2.2.11",
     "@types/jest": "^26.0.20",
     "@types/react-dom": "^17.0.1",
+    "@types/styled-components": "^5.1.7",
+    "css-loader": "^5.0.2",
     "html-webpack-plugin": "^5.2.0",
     "jest": "^26.6.3",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
-    "styled-components": "^5.2.1",
+    "style-loader": "^2.0.0",
     "ts-jest": "^26.5.1",
     "ts-loader": "^8.0.17",
     "typescript": "^4.1.5",
@@ -36,7 +42,12 @@
   },
   "dependencies": {
     "@types/react": "^17.0.2",
-    "tweakpane": "^1.5.9",
-    "use-tweaks": "^0.3.1"
+    "classnames": "^2.2.6",
+    "leva": "^0.8.4",
+    "polished": "^4.1.1",
+    "styled-components": "^5.2.1"
+  },
+  "peerDependencies": {
+    "styled-components": "^5.2.1"
   }
 }
