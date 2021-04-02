@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { createPlugin, Row, useInputContext } from "leva/plugin";
+import { createPlugin, Components, useInputContext } from "leva/plugin";
 import { useStoreContext } from "leva";
 import { set } from "../storage";
 import { Target } from "../Twkr.component";
@@ -97,24 +97,30 @@ function PersistControls() {
 
   return (
     <>
-      <Row>
+      <Components.Row>
         <Button onClick={() => set(formatState(values))}>Save</Button>
-      </Row>
-      <Row>
+      </Components.Row>
+      <Components.Row>
         <Button onClick={() => set({})}>Clear</Button>
-      </Row>
-      <Row>
+      </Components.Row>
+      <Components.Row>
         <Button
-          onClick={() => copy({ ...originalValues, ...formatState(values) })}
+          onClick={() =>
+            copy({ ...(originalValues as Target), ...formatState(values) })
+          }
         >
           Copy
         </Button>
-      </Row>
-      <Row>
-        <Button onClick={() => copyDelta(originalValues, formatState(values))}>
+      </Components.Row>
+      <Components.Row>
+        <Button
+          onClick={() =>
+            copyDelta(originalValues as Target, formatState(values))
+          }
+        >
           Copy Changed
         </Button>
-      </Row>
+      </Components.Row>
     </>
   );
 }

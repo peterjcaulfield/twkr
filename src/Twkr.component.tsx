@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useControls } from "leva";
 import { Schema, FolderInput } from "leva/dist/declarations/src/types";
 // we gotta import the enum from src: https://github.com/kulshekhar/ts-jest/issues/1229#issuecomment-569906667
-import { SpecialInputTypes } from "leva/src/types";
+import { SpecialInputs } from "leva/src/types";
 import { get, set } from "./storage";
 import { persistControls } from "./plugin/PersistControls";
 
@@ -96,7 +96,7 @@ const getFolderForToken = (
 };
 
 const createFolder = (schema = {}, collapsed = false): FolderInput<any> => ({
-  type: SpecialInputTypes.FOLDER,
+  type: SpecialInputs.FOLDER,
   schema,
   settings: {
     collapsed,
