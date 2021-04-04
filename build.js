@@ -1,7 +1,7 @@
 const pkg = require("./package.json");
 const fs = require("fs");
 
-fs.rmdirSync("./dist", { recursive: true, force: true });
+const clean = () => fs.rmdirSync("./dist", { recursive: true, force: true });
 
 const onError = () => process.exit(1);
 
@@ -17,6 +17,8 @@ const baseConfig = {
 };
 
 const esbuild = require("esbuild");
+
+clean();
 
 esbuild
   .build({
