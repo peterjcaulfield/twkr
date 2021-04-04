@@ -11,6 +11,9 @@ const baseConfig = {
   minify: true,
   entryPoints: ["./src/index.ts"],
   external: Object.keys(pkg.peerDependencies),
+  define: {
+    "process.env.NODE_ENV": "production",
+  },
 };
 
 const esbuild = require("esbuild");
