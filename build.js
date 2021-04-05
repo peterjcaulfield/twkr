@@ -1,7 +1,10 @@
 const pkg = require("./package.json");
 const fs = require("fs");
 
-const onError = () => process.exit(1);
+const onError = (e) => {
+  console.error(e);
+  process.exit(1);
+};
 
 const baseConfig = {
   bundle: true,
