@@ -1,13 +1,17 @@
 {
   "name": "twkr",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "",
-  "main": "index.js",
+  "license": "MIT",
+  "main": "dist/twkr.cjs.js",
+  "module": "dist/twkr.esm.js",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "test": "jest src",
     "dev": "webpack serve",
-    "build": "npm run build:lib && cp package.json dist",
-    "build:lib": "node ./build.js",
+    "build": "rimraf dist && node ./build.js",
     "tsc": "tsc --noEmit"
   },
   "repository": {
@@ -15,17 +19,18 @@
     "url": "git+https://github.com/peterjcaulfield/twkr.git"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "peterjcaulfield@gmail.com",
   "bugs": {
     "url": "https://github.com/peterjcaulfield/twkr/issues"
   },
   "homepage": "https://github.com/peterjcaulfield/twkr#readme",
   "devDependencies": {
+    "@changesets/cli": "^2.15.0",
     "@testing-library/react": "^11.2.5",
     "@testing-library/user-event": "^12.8.1",
     "@types/classnames": "^2.2.11",
     "@types/jest": "^26.0.20",
+    "@types/react": "^17.0.2",
     "@types/react-dom": "^17.0.1",
     "@types/styled-components": "^5.1.7",
     "css-loader": "^5.0.2",
@@ -34,6 +39,7 @@
     "jest": "^26.6.3",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
+    "rimraf": "^3.0.2",
     "style-loader": "^2.0.0",
     "ts-jest": "^26.5.1",
     "ts-loader": "^8.0.17",
@@ -43,11 +49,9 @@
     "webpack-dev-server": "^3.11.2"
   },
   "dependencies": {
-    "@types/react": "^17.0.2",
     "classnames": "^2.2.6",
     "leva": "^0.9.1",
-    "polished": "^4.1.1",
-    "styled-components": "^5.2.1"
+    "polished": "^4.1.1"
   },
   "peerDependencies": {
     "styled-components": "^5.2.1",
