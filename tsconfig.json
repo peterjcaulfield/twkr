@@ -5,10 +5,8 @@
     "noImplicitAny": true,
     "allowSyntheticDefaultImports": true,
     "allowJs": true,
-    "module": "esnext",
-    "target": "es2017",
+    "module": "ESNext",
     "jsx": "react",
-    "outDir": "dist",
     "skipLibCheck": true
   },
   "include": ["src/index.ts"],

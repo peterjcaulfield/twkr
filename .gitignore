@@ -1,4 +1,7 @@
 node_modules
 dist
 notes.md
+*.tgz
+.DS_Store
+package
 .npmrc
