@@ -12,7 +12,7 @@
     "test": "jest src",
     "dev": "webpack serve",
     "build": "rimraf dist && node ./build.js",
-    "release": "npm run build && npx changset publish",
+    "release": "npm run build && npx changeset publish",
     "version": "npx changeset version",
     "tsc": "tsc --noEmit"
   },
