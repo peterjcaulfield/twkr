@@ -1,6 +1,6 @@
 {
   "name": "twkr",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "",
   "license": "MIT",
   "main": "dist/twkr.cjs.js",
@@ -13,6 +13,7 @@
     "dev": "webpack serve",
     "build": "rimraf dist && node ./build.js",
     "release": "npm run build && npx changset publish",
+    "version": "npx changeset version",
     "tsc": "tsc --noEmit"
   },
   "repository": {
