@@ -5,6 +5,7 @@ import { Schema, FolderInput } from "leva/dist/declarations/src/types";
 import { SpecialInputs } from "leva/src/types";
 import { get, set } from "./storage";
 import { persistControls } from "./plugin/PersistControls";
+export { LevaInputs as InputTypes } from "leva";
 
 export type Target = Record<string, string>;
 
@@ -35,22 +36,21 @@ interface IInterceptor {
   get: (t: Target, prop: keyof typeof t) => string;
 }
 
-type TargetKeys = Set<string | number | symbol>;
-
-const tweakable = (
-  t: Target,
+const tweakable = <T extends Target, K extends keyof T>(
+  t: T,
   getHandler: (
-    ownKeys: TargetKeys,
-    r: React.MutableRefObject<Set<keyof typeof t>>
+    ownKeys: Set<K>,
+    r: React.MutableRefObject<Set<K>>
   ) => IInterceptor,
-  usedTokensRef: React.MutableRefObject<Set<keyof typeof t>>
-) => new Proxy(t, getHandler(new Set(Reflect.ownKeys(t)), usedTokensRef));
+  usedTokensRef: React.MutableRefObject<Set<K>>
+) =>
+  new Proxy(t, getHandler(new Set(Reflect.ownKeys(t) as K[]), usedTokensRef));
 
-const handler = (
-  ownKeys: TargetKeys,
-  usedTokensRef: React.MutableRefObject<Set<string>>
-) => ({
-  get: (t: Target, prop: keyof typeof t) => {
+const handler = <T extends Target>(
+  ownKeys: Set<keyof T>,
+  usedTokensRef: React.MutableRefObject<Set<keyof T>>
+): IInterceptor => ({
+  get: (t: T, prop: keyof T) => {
     if (!usedTokensRef.current.has(prop) && ownKeys.has(prop)) {
       usedTokensRef.current.add(prop);
     }
@@ -103,9 +103,11 @@ const createFolder = (schema = {}, collapsed = false): FolderInput<any> => ({
   },
 });
 
-// TODO handle keyToGroup here
-const getUseTweakConfigFromProps = (
-  tweaked: Set<keyof typeof t>,
+const USED_TOKENS_FOLDER = "Used Tokens";
+const UNUSED_TOKENS_FOLDER = "Unused Tokens";
+
+const getUseTweakConfigFromProps = <T extends Target, K extends keyof T>(
+  tweaked: Set<K>,
   t: Target,
   c: Schema,
   f: KeyToControl,
@@ -116,7 +118,7 @@ const getUseTweakConfigFromProps = (
   const untrackedTweakConfig: Schema = {};
 
   for (const entry of Object.keys(t)) {
-    let configForKey = tweaked.has(entry)
+    let configForKey = tweaked.has(entry as K)
       ? trackedTweakConfig
       : untrackedTweakConfig;
 
@@ -144,10 +146,10 @@ const getUseTweakConfigFromProps = (
 
   const config: Schema = {};
 
-  config["Used Tokens"] = createFolder(trackedTweakConfig);
+  config[USED_TOKENS_FOLDER] = createFolder(trackedTweakConfig);
 
   if (Object.keys(untrackedTweakConfig).length) {
-    config["Unused Tokens"] = createFolder(untrackedTweakConfig, true);
+    config[UNUSED_TOKENS_FOLDER] = createFolder(untrackedTweakConfig, true);
   }
 
   return config;
@@ -202,9 +204,10 @@ export const Twkr: React.FC<ITwkrProps> = ({
   );
 };
 
-const TweakedChildren: React.FC<
-  ITwkrProps & { tweaked: Set<string>; originalValues: Target }
-> = ({
+const TweakedChildren: React.FC<ITwkrProps & {
+  tweaked: Set<string>;
+  originalValues: Target;
+}> = ({
   children,
   originalValues,
   target,
