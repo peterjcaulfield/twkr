@@ -1,15 +1,15 @@
 {
   "name": "twkr",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "",
   "license": "MIT",
   "main": "dist/twkr.cjs.js",
   "module": "dist/twkr.esm.js",
-  "types": "./types/index.d.ts",
+  "types": "dist/types/index.d.ts",
   "typesVersions": {
     "*": {
       "*": [
-        "./types/index.d.ts"
+        "dist/types/index.d.ts"
       ]
     }
   },
