@@ -1,6 +1,6 @@
 import React from "react";
 import styled, { ThemeProvider } from "styled-components";
-import { Twkr, Target } from "../";
+import { Twkr, Target, InputTypes } from "../";
 
 const tokens = {
   color: "#fff",
@@ -21,7 +21,7 @@ const keyToControl = (t: Target, key: string) => {
   if (key.includes("Shadow")) {
     control = {
       value: t[key],
-      type: "STRING",
+      type: InputTypes.STRING,
     };
   } else {
     control = t[key];

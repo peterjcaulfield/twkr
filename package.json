@@ -1,17 +1,27 @@
 {
   "name": "twkr",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "",
   "license": "MIT",
   "main": "dist/twkr.cjs.js",
   "module": "dist/twkr.esm.js",
+  "types": "./types/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./types/index.d.ts"
+      ]
+    }
+  },
   "files": [
     "dist"
   ],
   "scripts": {
     "test": "jest src",
     "dev": "webpack serve",
-    "build": "rimraf dist && node ./build.js",
+    "build": "npm run build:lib && npm run build:types",
+    "build:lib": "rimraf dist && node ./build.js",
+    "build:types": "tsc -p tsconfig-types.json",
     "release": "npm run build && npx changeset publish",
     "version": "npx changeset version",
     "tsc": "tsc --noEmit"
@@ -53,8 +63,9 @@
   },
   "dependencies": {
     "classnames": "^2.2.6",
-    "leva": "^0.9.1",
-    "polished": "^4.1.1"
+    "leva": "^0.9.4",
+    "polished": "^4.1.1",
+    "styled-components": "^5.2.3"
   },
   "peerDependencies": {
     "styled-components": "^5.2.1",
