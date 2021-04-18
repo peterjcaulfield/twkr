@@ -22,6 +22,7 @@ const esbuild = require("esbuild");
 esbuild
   .build({
     ...baseConfig,
+    format: "esm",
     outfile: "dist/twkr.esm.js",
   })
   .catch(onError);
@@ -29,7 +30,7 @@ esbuild
 esbuild
   .build({
     ...baseConfig,
-    platform: "node",
+    format: "cjs",
     outfile: "dist/twkr.cjs.js",
   })
   .catch(onError);
