@@ -13,7 +13,7 @@ const baseConfig = {
   entryPoints: ["./src/index.ts"],
   external: Object.keys(pkg.peerDependencies),
   define: {
-    "process.env.NODE_ENV": "production",
+    "process.env.NODE_ENV": `"production"`,
   },
 };
 
